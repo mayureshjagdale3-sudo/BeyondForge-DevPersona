@@ -85,7 +85,7 @@ Do not write markdown quotes or explanations outside the JSON object.
 """
 
                     response = client.chat.completions.create(
-                        model="mixtral-8x7b-32768",
+                        model="llama-3.1-8b-instant",
                         messages=[
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": f"Code to review:\n\n{code_input}"}
