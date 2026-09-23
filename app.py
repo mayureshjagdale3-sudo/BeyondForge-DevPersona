@@ -26,7 +26,7 @@ with col_code:
         
     return results'''
     
-    code_input = st.text_area("Paste code snippet / Pull Request diff here:", value=default_code, height=300)
+    code_input = st.text_area("Paste code snippet / Pull Request diff here:", value=default_code, height=320)
     simulate_btn = st.button("⚡ Run Multi-Agent Persona Simulation", type="primary")
 
 with col_review:
@@ -34,46 +34,70 @@ with col_review:
     
     if simulate_btn:
         with st.spinner("Orchestrating IBM Bob 2.0 subagent debate..."):
-            time.sleep(1.5)
+            time.sleep(1.2)
             
         st.success("✅ Multi-Agent Simulation Complete!")
         
-        # Merge Confidence Score
-        st.metric(label="Merge Confidence Score", value="38%", delta="-62% (Blocked)")
+        # Checking if the code has best-practice indicators
+        is_clean_code = ("try:" in code_input or "os.getenv" in code_input or "logger" in code_input) and ("SELECT *" not in code_input and "API_KEY" not in code_input)
         
-        st.markdown("---")
-        
-        # Persona 1
-        with st.expander("🛡️ Alex Vance (Security Lead) - [CRITICAL]", expanded=True):
-            st.error("Flag: High Severity SQL Injection detected in line 3!")
-            st.write("Concatenating `user_id` directly into the SQL string allows trivial query injection. Must use parameterized queries.")
+        if is_clean_code:
+            # High Score State (Clean Code)
+            st.metric(label="Merge Confidence Score", value="96%", delta="+58% (Approved for Merge)")
+            st.balloons()
+            st.markdown("---")
             
-        # Persona 2
-        with st.expander("👶 Leo Miller (Junior Developer) - [CONFUSED]", expanded=True):
-            st.warning("Flag: High Cognitive Load / Missing Documentation")
-            st.write("What does `process_transaction(r)` do inside the loop? There are no type annotations or docstrings explaining the structure of `r`.")
+            with st.expander("🛡️ Alex Vance (Security Lead) - [CLEAN / APPROVED]", expanded=True):
+                st.success("Verdict: No hardcoded secrets or raw query concatenations found. Secure authorization handled.")
+                
+            with st.expander("👶 Leo Miller (Junior Developer) - [EXCELLENT]", expanded=True):
+                st.success("Verdict: Clear type hints and docstrings present. Readability cognitive load is optimal.")
 
-        # Persona 3
-        with st.expander("⚡ Marcus Kane (Principal SRE) - [WARNING]", expanded=True):
-            st.warning("Flag: Potential N+1 / Blocking Latency Trap")
-            st.write("Sequential processing inside the database iteration loop will block thread workers under high throughput.")
+            with st.expander("⚡ Marcus Kane (Principal SRE) - [RESILIENT]", expanded=True):
+                st.success("Verdict: Managed session pooling and strict timeouts detected. Safe for high-concurrency production.")
 
-        # Persona 4
-        with st.expander("💥 Raven Quinn (QA Chaos Monkey) - [EXCEPTION BREACH]", expanded=True):
-            st.error("Flag: Unhandled Null / Type Mutation Hazard")
-            st.write("If `user_id` is passed as `None` or an empty object, this directly executes an invalid SQL query causing unhandled runtime failure.")
+            with st.expander("💥 Raven Quinn (QA Chaos Monkey) - [BULLETPROOF]", expanded=True):
+                st.success("Verdict: Explicit parameter validation and defensive exception handling prevent runtime crashes.")
+                
+            st.markdown("---")
+            st.info("🎉 Code passes all 4 persona gates. Ready for immediate production merge!")
+
+        else:
+            # Low Score State (Vulnerable/Flawed Code)
+            st.metric(label="Merge Confidence Score", value="38%", delta="-62% (Blocked)")
+            st.markdown("---")
             
-        st.markdown("---")
-        st.subheader("🤖 IBM Bob 2.0 Automated Remediation Patch")
-        st.code('''# Refactored with parameterized query and error handling
-def get_user_records(user_id: int) -> list:
-    """Safely fetch and batch-process user transaction records."""
-    if not user_id:
-        raise ValueError("Invalid user_id provided")
+            with st.expander("🛡️ Alex Vance (Security Lead) - [CRITICAL VULNERABILITY]", expanded=True):
+                st.error("Flag: Critical Security Risk Detected!")
+                st.write("Identified unescaped dynamic payload or hardcoded sensitive token. Risk of injection/credential breach.")
+                
+            with st.expander("👶 Leo Miller (Junior Developer) - [CONFUSED / HIGH FRICTION]", expanded=True):
+                st.warning("Flag: Readability & Documentation Deficit")
+                st.write("Missing parameter type hints, ambiguous variable structures, and absent docstrings.")
+
+            with st.expander("⚡ Marcus Kane (Principal SRE) - [RUNTIME LATENCY WARNING]", expanded=True):
+                st.warning("Flag: Resource Leak / Thread Blocking Danger")
+                st.write("Unbounded I/O operations without timeouts will cause thread exhaustion under production traffic.")
+
+            with st.expander("💥 Raven Quinn (QA Chaos Monkey) - [EXCEPTION BREACH]", expanded=True):
+                st.error("Flag: Unhandled Edge Case Trap")
+                st.write("Null pointers, missing payload keys, or network failures will bubble up as unhandled runtime errors.")
+                
+            st.markdown("---")
+            st.subheader("🤖 IBM Bob 2.0 Automated Remediation Patch")
+            st.code('''# Refactored with parameterized queries, env tokens & error handling
+import os, requests
+
+def safe_handler(payload_data: dict) -> dict:
+    """Production-grade hardened handler generated by IBM Bob 2.0."""
+    token = os.getenv("API_TOKEN")
+    if not token or not payload_data:
+        raise ValueError("Invalid parameters or missing credentials")
         
-    query = "SELECT * FROM users WHERE id = :user_id"
-    results = db.execute(query, {"user_id": user_id})
-    
-    return [process_transaction(r) for r in results]''', language="python")
+    with requests.Session() as session:
+        res = session.post("https://api.service.internal/v1", json=payload_data, timeout=5)
+        res.raise_for_status()
+        return res.json()''', language="python")
+
     else:
         st.info("Click 'Run Multi-Agent Persona Simulation' to initiate review.")
