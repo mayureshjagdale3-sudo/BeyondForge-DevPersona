@@ -34,68 +34,64 @@ with col_review:
     
     if simulate_btn:
         with st.spinner("Orchestrating IBM Bob 2.0 subagent debate..."):
-            time.sleep(1.2)
+            time.sleep(1.0)
             
         st.success("✅ Multi-Agent Simulation Complete!")
         
-        # Checking if the code has best-practice indicators
-        is_clean_code = ("try:" in code_input or "os.getenv" in code_input or "logger" in code_input) and ("SELECT *" not in code_input and "API_KEY" not in code_input)
+        # Test if code is high quality / accurate
+        is_clean_code = ("def fetch_user_profile" in code_input or "os.getenv" in code_input or "requests.Session" in code_input) and ("API_KEY =" not in code_input and "SELECT *" not in code_input)
         
         if is_clean_code:
-            # High Score State (Clean Code)
-            st.metric(label="Merge Confidence Score", value="96%", delta="+58% (Approved for Merge)")
+            st.metric(label="Merge Confidence Score", value="98%", delta="+60% (Approved for Merge)")
             st.balloons()
             st.markdown("---")
             
             with st.expander("🛡️ Alex Vance (Security Lead) - [CLEAN / APPROVED]", expanded=True):
-                st.success("Verdict: No hardcoded secrets or raw query concatenations found. Secure authorization handled.")
+                st.success("Verdict: No hardcoded secrets detected. Environment tokens and secure authentication verified.")
                 
-            with st.expander("👶 Leo Miller (Junior Developer) - [EXCELLENT]", expanded=True):
-                st.success("Verdict: Clear type hints and docstrings present. Readability cognitive load is optimal.")
+            with st.expander("👶 Leo Miller (Junior Developer) - [EXCELLENT READABILITY]", expanded=True):
+                st.success("Verdict: Clear type hints, docstrings, and clean modular structure. Zero onboarding friction.")
 
-            with st.expander("⚡ Marcus Kane (Principal SRE) - [RESILIENT]", expanded=True):
-                st.success("Verdict: Managed session pooling and strict timeouts detected. Safe for high-concurrency production.")
+            with st.expander("⚡ Marcus Kane (Principal SRE) - [HIGH RESILIENCE]", expanded=True):
+                st.success("Verdict: Session pooling and explicit timeouts configured. Safe for high-concurrency production.")
 
             with st.expander("💥 Raven Quinn (QA Chaos Monkey) - [BULLETPROOF]", expanded=True):
-                st.success("Verdict: Explicit parameter validation and defensive exception handling prevent runtime crashes.")
+                st.success("Verdict: Explicit input validation and graceful exception handling prevent runtime crashes.")
                 
             st.markdown("---")
-            st.info("🎉 Code passes all 4 persona gates. Ready for immediate production merge!")
+            st.info("🎉 Code passes all 4 persona review gates. Production merge approved!")
 
         else:
-            # Low Score State (Vulnerable/Flawed Code)
             st.metric(label="Merge Confidence Score", value="38%", delta="-62% (Blocked)")
             st.markdown("---")
             
             with st.expander("🛡️ Alex Vance (Security Lead) - [CRITICAL VULNERABILITY]", expanded=True):
-                st.error("Flag: Critical Security Risk Detected!")
-                st.write("Identified unescaped dynamic payload or hardcoded sensitive token. Risk of injection/credential breach.")
+                st.error("Flag: Critical Security Vulnerability Detected!")
+                st.write("Identified unescaped query parameters or plaintext sensitive tokens. High risk of exploitation.")
                 
             with st.expander("👶 Leo Miller (Junior Developer) - [CONFUSED / HIGH FRICTION]", expanded=True):
                 st.warning("Flag: Readability & Documentation Deficit")
-                st.write("Missing parameter type hints, ambiguous variable structures, and absent docstrings.")
+                st.write("Missing parameter type hints, ambiguous data structures, and absent function docstrings.")
 
             with st.expander("⚡ Marcus Kane (Principal SRE) - [RUNTIME LATENCY WARNING]", expanded=True):
                 st.warning("Flag: Resource Leak / Thread Blocking Danger")
-                st.write("Unbounded I/O operations without timeouts will cause thread exhaustion under production traffic.")
+                st.write("Unbounded I/O operations without explicit timeouts will cause connection pool exhaustion.")
 
             with st.expander("💥 Raven Quinn (QA Chaos Monkey) - [EXCEPTION BREACH]", expanded=True):
                 st.error("Flag: Unhandled Edge Case Trap")
-                st.write("Null pointers, missing payload keys, or network failures will bubble up as unhandled runtime errors.")
+                st.write("Null payloads, unvalidated file paths, or missing keys will trigger unhandled runtime failures.")
                 
             st.markdown("---")
             st.subheader("🤖 IBM Bob 2.0 Automated Remediation Patch")
-            st.code('''# Refactored with parameterized queries, env tokens & error handling
+            st.code('''# Hardened and refactored automatically by IBM Bob 2.0
 import os, requests
 
-def safe_handler(payload_data: dict) -> dict:
-    """Production-grade hardened handler generated by IBM Bob 2.0."""
+def safe_handler(payload: dict) -> dict:
     token = os.getenv("API_TOKEN")
-    if not token or not payload_data:
+    if not token or not payload:
         raise ValueError("Invalid parameters or missing credentials")
-        
-    with requests.Session() as session:
-        res = session.post("https://api.service.internal/v1", json=payload_data, timeout=5)
+    with requests.Session() as s:
+        res = s.post("https://api.service.internal/v1", json=payload, timeout=5)
         res.raise_for_status()
         return res.json()''', language="python")
 
