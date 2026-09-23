@@ -1,169 +1,149 @@
 import streamlit as st
-import ast
-import time
+import json
+from groq import Groq
 
 st.set_page_config(
-    page_title="BeyondForge | Multi-Agent Simulator", 
+    page_title="BeyondForge | Autonomous Multi-Agent Simulator", 
     page_icon="🚀", 
     layout="wide"
 )
 
-# Sidebar Configuration
+# Sidebar sathi API Key input
 with st.sidebar:
-    st.header("⚙️ Agent Controls")
-    strictness = st.slider("Persona Strictness Threshold", 1, 10, 8, help="Controls the severity penalty applied by agents.")
+    st.header("⚙️ Engine Configuration")
+    groq_api_key = st.text_input("Enter Groq API Key", type="password", placeholder="gsk_...")
+    st.caption("Powered by Llama-3.3-70b-versatile via Groq & IBM Bob 2.0 architecture.")
     st.markdown("---")
     st.subheader("Active Personas")
-    st.markdown("- 🛡️ **Alex Vance** (Security)")
+    st.markdown("- 🛡️ **Alex Vance** (Security Lead)")
     st.markdown("- 👶 **Leo Miller** (Junior Dev)")
     st.markdown("- ⚡ **Marcus Kane** (Principal SRE)")
-    st.markdown("- 💥 **Raven Quinn** (QA Chaos)")
-    st.markdown("---")
-    st.caption("Engine: IBM Bob 2.0 Subagent Orchestration")
+    st.markdown("- 💥 **Raven Quinn** (QA Chaos Monkey)")
 
 st.title("🚀 BeyondForge: DevPersona Simulator")
-st.caption("Autonomous Multi-Agent Developer Simulation & Code Review Engine powered by IBM Bob 2.0")
+st.caption("Cross-Language Multi-Agent Engineering Round-Table powered by IBM Bob 2.0")
 st.markdown("---")
 
 col_code, col_review = st.columns([1, 1])
 
 with col_code:
     st.subheader("💻 Code Submission / PR Diff")
-    sample_code = '''def delete_user_account(user_input_id):
-    # Dynamic SQL concatenation
-    sql = "DELETE FROM users WHERE id = " + user_input_id
-    db_cursor.execute(sql)
-    
-    # Infinite loop risk
-    while True:
-        status = check_sync()
-        if status == "DONE":
-            break
-            
-    x = [a for a in range(10000000)]
-    return True'''
-    
-    code_input = st.text_area("Paste Python code to inspect:", value=sample_code, height=360)
-    run_btn = st.button("⚡ Run Multi-Agent Persona Audit", type="primary")
+    sample_code = """// Paste ANY language (Python, JS, Go, Java, C++)
+function processUserData(userId, rawInput) {
+    let query = "SELECT * FROM users WHERE id = " + userId;
+    db.execute(query);
+
+    while(true) {
+        let status = checkJob();
+        if(status === 'DONE') break;
+    }
+
+    let x = [];
+    return true;
+}"""
+    code_input = st.text_area("Paste code snippet to audit:", value=sample_code, height=380)
+    run_btn = st.button("⚡ Run Live Multi-Agent Persona Audit", type="primary")
 
 with col_review:
-    st.subheader("👥 Live Multi-Agent Round-Table")
-    
-    if run_btn and code_input.strip():
-        with st.spinner("Dispatching personas to inspect AST & execution paths..."):
-            time.sleep(1.0)
-            
-        security_issues = []
-        junior_issues = []
-        sre_issues = []
-        qa_issues = []
-        
-        # AST & Pattern Analysis
-        try:
-            tree = ast.parse(code_input)
-            
-            # Junior Dev Checks
-            functions = [node for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
-            for fn in functions:
-                if not ast.get_docstring(fn):
-                    junior_issues.append(f"Function '{fn.name}' is missing an explanatory docstring.")
-                for arg in fn.args.args:
-                    if not arg.annotation:
-                        junior_issues.append(f"Parameter '{arg.arg}' in function '{fn.name}' lacks type hints.")
-            
-            for node in ast.walk(tree):
-                if isinstance(node, ast.Name) and len(node.id) == 1 and node.id not in ['i', 'j', '_']:
-                    junior_issues.append(f"Single-letter ambiguous variable '{node.id}' increases cognitive overhead.")
+    st.subheader("👥 Live Multi-Agent Debate")
 
-            # Security Lead Checks
-            code_lower = code_input.lower()
-            if any(k in code_input for k in ["API_KEY", "SECRET", "password =", "token ="]):
-                security_issues.append("Hardcoded credentials or secrets exposed directly in code.")
-            if "select" in code_lower or "delete" in code_lower:
-                if ("+" in code_input or "%" in code_input or "f\"" in code_input) and ("%s" not in code_input):
-                    security_issues.append("Unsanitized dynamic SQL query construction (SQL Injection hazard).")
-
-            # SRE / DevOps Checks
-            for node in ast.walk(tree):
-                if isinstance(node, ast.While) and isinstance(node.test, ast.Constant) and node.test.value is True:
-                    sre_issues.append("Unbounded `while True` loop detected without circuit-breaker escape logic.")
-            if "range(1000" in code_input:
-                sre_issues.append("Heavy memory allocation detected inside wide iteration range.")
-
-            # QA Chaos Checks
-            has_guard = any(isinstance(node, ast.If) for node in ast.walk(tree))
-            has_raise = any(isinstance(node, ast.Raise) for node in ast.walk(tree))
-            if functions and not (has_guard and has_raise):
-                qa_issues.append("Absence of defensive type guards or input bounds checking.")
-
-        except SyntaxError as err:
-            qa_issues.append(f"Syntax Error on line {err.lineno}: {err.msg}")
-
-        # Strictness Score Calculation
-        total_flaws = len(security_issues) + len(junior_issues) + len(sre_issues) + len(qa_issues)
-        penalty_rate = strictness * 2.5
-        
-        if total_flaws == 0:
-            score = 98
-            st.metric("Merge Confidence Score", f"{score}%", delta="+58% (Approved)")
-            st.balloons()
-            st.success("🎉 All 4 Personas approved this code for production merge!")
+    if run_btn:
+        if not groq_api_key:
+            st.error("Sidebar madhe tuzhi Groq API Key (`gsk_...`) paste kar!")
+        elif not code_input.strip():
+            st.warning("Pahila davyabaajula code paste kar.")
         else:
-            score = max(5, int(100 - (total_flaws * penalty_rate)))
-            st.metric("Merge Confidence Score", f"{score}%", delta=f"-{100-score}% (Blocked)")
-
-        st.markdown("---")
-
-        # Personas View
-        with st.expander("🛡️ Alex Vance (Security Lead)", expanded=True):
-            if security_issues:
-                for sec in security_issues:
-                    st.error(f"[VULNERABILITY] {sec}")
-            else:
-                st.success("[PASSED] Zero injection vectors or hardcoded secrets found.")
-
-        with st.expander("👶 Leo Miller (Junior Developer)", expanded=True):
-            if junior_issues:
-                for jun in junior_issues:
-                    st.warning(f"[READABILITY] {jun}")
-            else:
-                st.success("[PASSED] Clear docstrings, typed annotations, and clean naming.")
-
-        with st.expander("⚡ Marcus Kane (Principal SRE)", expanded=True):
-            if sre_issues:
-                for sre in sre_issues:
-                    st.error(f"[SCALE HAZARD] {sre}")
-            else:
-                st.success("[PASSED] Efficient runtime profile with bounded memory limits.")
-
-        with st.expander("💥 Raven Quinn (QA Chaos Monkey)", expanded=True):
-            if qa_issues:
-                for qa in qa_issues:
-                    st.warning(f"[FAULT RISK] {qa}")
-            else:
-                st.success("[PASSED] Defensive checks safeguard against unhandled exceptions.")
-
-        # Download Report Feature
-        report_text = f"""# BeyondForge Audit Report
-Merge Confidence Score: {score}%
-Strictness Level: {strictness}/10
-
-## Findings
-- Security Issues: {len(security_issues)}
-- Readability Issues: {len(junior_issues)}
-- Performance/SRE Issues: {len(sre_issues)}
-- QA/Fault Issues: {len(qa_issues)}
-
-Orchestrated by IBM Bob 2.0
+            with st.spinner("🤖 IBM Bob 2.0 dispatching autonomous personas across AST & runtime vectors..."):
+                try:
+                    client = Groq(api_key=groq_api_key)
+                    
+                    system_prompt = """
+You are BeyondForge, an autonomous multi-agent code evaluation engine orchestrated by IBM Bob 2.0.
+Analyze the user's submitted code across any programming language.
+You MUST output ONLY valid JSON matching this exact structure:
+{
+  "confidence_score": <int between 0 and 100>,
+  "security_agent": {
+    "status": "<PASSED or CRITICAL>",
+    "feedback": "<Alex Vance concise security critique on injections, tokens, sanitization>"
+  },
+  "junior_agent": {
+    "status": "<PASSED or WARNING>",
+    "feedback": "<Leo Miller critique on readability, documentation, confusing variable names>"
+  },
+  "sre_agent": {
+    "status": "<PASSED or SCALE_HAZARD>",
+    "feedback": "<Marcus Kane critique on infinite loops, memory leaks, latency, concurrency>"
+  },
+  "qa_agent": {
+    "status": "<PASSED or FAULT_RISK>",
+    "feedback": "<Raven Quinn critique on null safety, type guarding, unhandled exceptions>"
+  },
+  "autonomous_fix": "<Synthesized fully production-ready corrected code patch>"
+}
+Do not write markdown quotes or explanations outside the JSON object.
 """
-        st.markdown("---")
-        st.download_button(
-            label="📥 Download Full Audit Report",
-            data=report_text,
-            file_name="beyondforge_audit_report.md",
-            mime="text/markdown"
-        )
-    elif run_btn:
-        st.error("Please paste code in the left box first.")
+
+                    response = client.chat.completions.create(
+                        model="llama-3.3-70b-versatile",
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": f"Code to review:\n\n{code_input}"}
+                        ],
+                        response_format={"type": "json_object"},
+                        temperature=0.2
+                    )
+
+                    result = json.loads(response.choices[0].message.content)
+                    
+                    score = result.get("confidence_score", 50)
+                    if score >= 80:
+                        st.metric("Merge Confidence Score", f"{score}%", delta=f"+{score-50}% (Approved)")
+                        st.balloons()
+                        st.success("🎉 All personas reached consensus: Code approved for deployment.")
+                    else:
+                        st.metric("Merge Confidence Score", f"{score}%", delta=f"-{100-score}% (Review Blocked)")
+                        st.error("⚠️ Review blocked by persona round-table. Critical remediations required.")
+
+                    st.markdown("---")
+
+                    # 1. Alex Vance
+                    sec = result.get("security_agent", {})
+                    with st.expander("🛡️ Alex Vance (Security Lead)", expanded=True):
+                        if sec.get("status") == "PASSED":
+                            st.success(f"**[PASSED]** {sec.get('feedback')}")
+                        else:
+                            st.error(f"**[VULNERABILITY]** {sec.get('feedback')}")
+
+                    # 2. Leo Miller
+                    jun = result.get("junior_agent", {})
+                    with st.expander("👶 Leo Miller (Junior Developer)", expanded=True):
+                        if jun.get("status") == "PASSED":
+                            st.success(f"**[PASSED]** {jun.get('feedback')}")
+                        else:
+                            st.warning(f"**[READABILITY]** {jun.get('feedback')}")
+
+                    # 3. Marcus Kane
+                    sre = result.get("sre_agent", {})
+                    with st.expander("⚡ Marcus Kane (Principal SRE)", expanded=True):
+                        if sre.get("status") == "PASSED":
+                            st.success(f"**[PASSED]** {sre.get('feedback')}")
+                        else:
+                            st.error(f"**[SCALE HAZARD]** {sre.get('feedback')}")
+
+                    # 4. Raven Quinn
+                    qa = result.get("qa_agent", {})
+                    with st.expander("💥 Raven Quinn (QA Chaos Monkey)", expanded=True):
+                        if qa.get("status") == "PASSED":
+                            st.success(f"**[PASSED]** {qa.get('feedback')}")
+                        else:
+                            st.warning(f"**[FAULT RISK]** {qa.get('feedback')}")
+
+                    st.markdown("---")
+                    st.subheader("🤖 IBM Bob 2.0 Autonomous Fix Proposal")
+                    st.code(result.get("autonomous_fix", "# No patch required"), language="text")
+
+                except Exception as e:
+                    st.error(f"Execution Error: {str(e)}")
     else:
-        st.info("Paste your code snippet and click the button to trigger persona audits.")
+        st.info("Sidebar madhe Groq Key taka, davyakade kontahi code paste kara ani review trigger kara.")
