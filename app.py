@@ -3,7 +3,7 @@ import json
 from groq import Groq
 
 st.set_page_config(
-    page_title="BeyondForge | Autonomous Multi-Agent Simulator", 
+    page_title="BeyondForge | Autonomous Multi-Agent Simulator",
     page_icon="🚀", 
     layout="wide"
 )
